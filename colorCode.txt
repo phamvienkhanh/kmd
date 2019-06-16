@@ -1,0 +1,4 @@
+#background 0 153 188
+#fistSegment 235 77 112
+#secondSegment 0 0 170
+#thirdSegment 250 186 121
