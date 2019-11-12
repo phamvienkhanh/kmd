@@ -2,10 +2,12 @@
 //
 
 #include "stdafx.h"
-#include <cstring>
 #define GetCurrentDir _getcwd
 
-HHOOK			hHook = NULL;
+#ifndef _O_U16TEXT
+#define _O_U16TEXT 0x20000
+#endif
+
 
 enum CommandType 
 {
@@ -29,7 +31,7 @@ CommandType ParseCommand(const char* _cmd)
 	return CommandType::COUNT;
 }
 
-void GetDirectTree(const std::string& name, std::vector<std::string>& v)
+void GetDirectTree(const std::string& name, std::vector<WIN32_FIND_DATA>& v)
 {
     std::string pattern(name);
     pattern.append("\\*");
@@ -37,7 +39,7 @@ void GetDirectTree(const std::string& name, std::vector<std::string>& v)
     HANDLE hFind;
     if ((hFind = FindFirstFile(pattern.c_str(), &data)) != INVALID_HANDLE_VALUE) {
         do {
-            v.push_back(data.cFileName);
+            v.push_back(data);
         } while (FindNextFile(hFind, &data) != 0);
         FindClose(hFind);
     }
@@ -92,18 +94,54 @@ Kmd * Kmd::GetInstance()
 
 void Kmd::Run()
 {
+	std::string strcmd="";
+	
+	m_CurrentPath = GetCurrentWorkingDir();	
+	PrintWorkingDir(m_CurrentPath);
+
 	while (true)
 	{
-		m_CurrentPath = GetCurrentWorkingDir();
-		
-		PrintWorkingDir(m_CurrentPath);
+		// char cmd[256];
+		// std::cin.getline(cmd, 256);
 
 		//wait for get command
-		char cmd[256];
-		std::cin.getline(cmd, 256);
+		char ch = _getch();
 
-		ExecuteCommand(cmd);
+		if(ch == 13) //enter key
+		{
+			std::wcout<< std::endl;
+			ExecuteCommand(strcmd.c_str());
 
+			if(strcmd != "cls")
+				std::wcout<< std::endl;
+
+			m_CurrentPath = GetCurrentWorkingDir();	
+			PrintWorkingDir(m_CurrentPath);
+			strcmd = "";
+		}
+		else if(ch == 8) //backspace key
+		{
+			if(strcmd.size() > 0)
+			{
+				std::wcout<<"\b \b";
+				strcmd.pop_back();
+			}
+		}
+		else if(ch == 9) //tab key
+		{
+			while(strcmd.size() > 0 && (strcmd.back() != ' '))
+			{
+				std::wcout<<"\b \b";
+				strcmd.pop_back();
+			}
+			strcmd += "recommend";
+			std::wcout << "recommend";
+		}
+		else
+		{
+			strcmd += ch;
+			std::wcout<< char(ch);
+		}
 	}
 }
 
@@ -123,7 +161,7 @@ void Kmd::Init()
 
 	SetConsoleTitle("KityKeith-Kmd");
 
-	//set code page utf-8
+	//set code page utf-16
 	_setmode(_fileno(stdout), _O_U16TEXT);
 }
 
@@ -223,7 +261,7 @@ void Kmd::PrintWorkingDir(std::string _path)
 
 	ResetColor();
 
-	std::wcout << " ";
+	std::wcout << std::endl << "$ ";
 }
 
 void Kmd::ExecuteCommand(const char* _cmd)
@@ -243,12 +281,12 @@ void Kmd::ExecuteCommand(const char* _cmd)
 		}
 		else if(ParseCommand(_cmd) == CommandType::LIST_FILE)
 		{
-			std::vector<std::string> listFiles;
+			std::vector<WIN32_FIND_DATA> listFiles;
 			std::string currentDir = GetCurrentWorkingDir();
 			GetDirectTree(currentDir,listFiles);
-			for(std::string i : listFiles)
+			for(auto& i : listFiles)
 			{
-				std::wcout<< std::wstring(i.begin(),i.end()) <<std::endl;
+				std::wcout<< i.cFileName <<std::endl;
 			}
 		}
 		else

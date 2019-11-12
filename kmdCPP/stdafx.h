@@ -18,6 +18,8 @@
 #include <fcntl.h>
 #include <io.h>
 #include <vector>
+#include <cstring>
+#include <conio.h>
 
 
 
