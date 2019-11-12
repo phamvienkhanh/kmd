@@ -1,49 +1,9 @@
 // kmd.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
-#define GetCurrentDir _getcwd
-
-#ifndef _O_U16TEXT
-#define _O_U16TEXT 0x20000
-#endif
+#include "utilities.h"
 
 
-enum CommandType 
-{
-	CHANGE_DIR = 0,
-	LIST_FILE,
-	
-	COUNT
-};
-
-CommandType ParseCommand(const char* _cmd)
-{
-	if((std::strlen(_cmd) > 3) && (_cmd[0] == 'c') && (_cmd[1] == 'd') && (_cmd[2] == ' '))
-	{
-		return CommandType::CHANGE_DIR;
-	}
-	else if((std::strlen(_cmd) == 2) && (_cmd[0] == 'l') && (_cmd[1] == 's'))
-	{
-		return CommandType::LIST_FILE;
-	}
-	
-	return CommandType::COUNT;
-}
-
-void GetDirectTree(const std::string& name, std::vector<WIN32_FIND_DATA>& v)
-{
-    std::string pattern(name);
-    pattern.append("\\*");
-    WIN32_FIND_DATA data;
-    HANDLE hFind;
-    if ((hFind = FindFirstFile(pattern.c_str(), &data)) != INVALID_HANDLE_VALUE) {
-        do {
-            v.push_back(data);
-        } while (FindNextFile(hFind, &data) != 0);
-        FindClose(hFind);
-    }
-}
 
 //singleton class
 class Kmd
@@ -269,7 +229,7 @@ void Kmd::ExecuteCommand(const char* _cmd)
 	if (std::strlen(_cmd) != 0)
 	{
 		//if change directory
-		if (ParseCommand(_cmd) == CommandType::CHANGE_DIR)
+		if (Utilities::ParseCommand(_cmd) == CommandType::CHANGE_DIR)
 		{
 			std::string _chpath = "";
 			for (int i = 3; i < std::strlen(_cmd); i++)
@@ -279,11 +239,11 @@ void Kmd::ExecuteCommand(const char* _cmd)
 
 			_chdir(_chpath.c_str());
 		}
-		else if(ParseCommand(_cmd) == CommandType::LIST_FILE)
+		else if(Utilities::ParseCommand(_cmd) == CommandType::LIST_FILE)
 		{
 			std::vector<WIN32_FIND_DATA> listFiles;
 			std::string currentDir = GetCurrentWorkingDir();
-			GetDirectTree(currentDir,listFiles);
+			Utilities::GetDirectTree(currentDir,listFiles);
 			for(auto& i : listFiles)
 			{
 				std::wcout<< i.cFileName <<std::endl;
