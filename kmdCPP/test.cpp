@@ -1,13 +1,24 @@
-﻿#include <conio.h>
-#include <ctype.h>
-#include <iostream>
-#include <string>
+﻿#include "stdafx.h"
+
+void GetDirectTree(const std::string& name, std::vector<WIN32_FIND_DATA>& v)
+{
+    std::string pattern(name);
+    pattern.append("\\*");
+    WIN32_FIND_DATA data;
+    HANDLE hFind;
+    if ((hFind = FindFirstFile(pattern.c_str(), &data)) != INVALID_HANDLE_VALUE) 
+    {
+        do {
+            v.push_back(data);
+        } while (FindNextFile(hFind, &data) != 0);
+        FindClose(hFind);
+    }
+}
 
 int main( void )
 {
    	int ch;
 	std::string strcmd="";
-   	_cputs( "Type 'Y' when finished typing keys: " );
    	do
    	{
       		ch = _getch();
@@ -15,6 +26,12 @@ int main( void )
 		{
 			std::cout <<std::endl<< strcmd << std::endl;
 			strcmd = "";
+			std::vector<WIN32_FIND_DATA> v;
+			GetDirectTree("D:\\Games\\do", v);
+			for(auto& i : v)
+			{
+				std::cout<< i.cFileName <<std::endl;
+			}
 		}
 		else if(ch == 8)
 		{

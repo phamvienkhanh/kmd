@@ -20,6 +20,7 @@
 #include <vector>
 #include <cstring>
 #include <conio.h>
+#include <algorithm>
 
 
 
