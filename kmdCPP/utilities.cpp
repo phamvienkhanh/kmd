@@ -2,6 +2,12 @@
 
 namespace Utilities 
 {
+    /*
+        @param 
+            _cmd : string command
+        @return
+             enum CommandType : type of command 
+    */
     CommandType ParseCommand(const char* _cmd)
     {
         if((std::strlen(_cmd) > 3) && (_cmd[0] == 'c') && (_cmd[1] == 'd') && (_cmd[2] == ' '))
@@ -16,18 +22,25 @@ namespace Utilities
         return CommandType::COUNT;
     }
 
-    void GetDirectTree(const std::string& name, std::vector<WIN32_FIND_DATA>& v)
+    /*
+        @input 
+            path : path to directory
+        @output
+            list of files in path
+    */
+    void GetListFiles(const std::string& path, std::vector<WIN32_FIND_DATA>& listFiles)
     {
-        std::string pattern(name);
+        std::string pattern(path);
         pattern.append("\\*");
         WIN32_FIND_DATA data;
         HANDLE hFind;
         if ((hFind = FindFirstFile(pattern.c_str(), &data)) != INVALID_HANDLE_VALUE) 
         {
             do {
-                v.push_back(data);
+                listFiles.push_back(data);
             } while (FindNextFile(hFind, &data) != 0);
             FindClose(hFind);
         }
     }
+    
 }

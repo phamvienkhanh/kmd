@@ -19,5 +19,5 @@ enum CommandType
 namespace Utilities 
 {
     CommandType ParseCommand(const char* _cmd);
-    void GetDirectTree(const std::string& name, std::vector<WIN32_FIND_DATA>& v);
+    void GetListFiles(const std::string& name, std::vector<WIN32_FIND_DATA>& v);
 }

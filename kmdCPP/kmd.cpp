@@ -2,9 +2,6 @@
 //
 
 #include "utilities.h"
-
-
-
 //singleton class
 class Kmd
 {
@@ -24,6 +21,12 @@ private:
 
 	CONSOLE_SCREEN_BUFFER_INFO  info;
 
+	bool 		m_isFistTimePressed;
+	std::string m_currentCommand;
+	int 		m_currIdxRcm;
+
+	std::vector<WIN32_FIND_DATA> m_listFileRecommend;
+
 private:
 	Kmd();
 
@@ -37,6 +40,8 @@ private:
 	void PrintWorkingDir(std::string _path);
 
 	void ExecuteCommand(const char * _cmd);
+
+	void HandleTabKey();
 
 };
 
@@ -54,14 +59,8 @@ Kmd * Kmd::GetInstance()
 
 void Kmd::Run()
 {
-	std::string strcmd			= "";
-	std::string macthFileName 	= "";
-	bool 		isTabPressed 	= false;
-	int 		currIdxRcm 		= 0;
-	std::string inputPath 		= "";
-	m_CurrentPath 				= GetCurrentWorkingDir();
 
-	std::vector<WIN32_FIND_DATA> listFileRcm;
+	m_CurrentPath 				= GetCurrentWorkingDir();
 	PrintWorkingDir(m_CurrentPath);
 
 	while (true)
@@ -71,117 +70,36 @@ void Kmd::Run()
 
 		if(ch == 9) //tab key
 		{
-			if(!isTabPressed)
-			{
-				currIdxRcm 		= 0;
-				isTabPressed 	= true;
-				listFileRcm.clear();
-
-				inputPath 		= "";
-				macthFileName 	= "";
-
-				while(strcmd.size() > 0 && (strcmd.back() != ' '))
-				{
-					std::wcout<<"\b \b";
-					inputPath += strcmd.back();
-					strcmd.pop_back();
-				}
-
-				std::reverse(inputPath.begin(), inputPath.end());
-				if(inputPath.size() < 2)
-				{
-					Utilities::GetDirectTree(m_CurrentPath,listFileRcm);
-					strcmd += std::string(listFileRcm[currIdxRcm].cFileName);
-					std::wcout<< listFileRcm[currIdxRcm].cFileName;
-					//std::wcout<< "listFileRcm[currIdxRcm].cFileName";
-					
-				}
-				else 
-				{
-					/*if(((inputPath[0] > 'A' && inputPath[0] < 'Z') 
-						|| (inputPath[0] > 'a' && inputPath[0] < 'z'))
-						&& inputPath[1] == ':')
-					{
-						Utilities::GetDirectTree(inputPath,listFileRcm);
-						strcmd += std::string(listFileRcm[currIdxRcm].cFileName);
-						std::wcout<< listFileRcm[currIdxRcm].cFileName;
-					}
-					else
-					{
-						Utilities::GetDirectTree(m_CurrentPath,listFileRcm);
-						strcmd += std::string(listFileRcm[currIdxRcm].cFileName);
-						std::wcout<< listFileRcm[currIdxRcm].cFileName;
-					}*/
-
-					while(inputPath.size() > 0 && (inputPath.back() != '\\'))
-					{
-						macthFileName.push_back(inputPath.back());
-						inputPath.pop_back();
-					}
-					
-					std::reverse(macthFileName.begin(), macthFileName.end());
-					Utilities::GetDirectTree(inputPath,listFileRcm);
-
-					std::vector<WIN32_FIND_DATA> filterFile;
-					for(auto& file : listFileRcm)
-					{
-						std::string strFilename = file.cFileName;
-						if(strFilename.rfind(macthFileName,0) == 0)
-						{
-							filterFile.push_back(file);
-
-						}
-					}
-
-					listFileRcm = filterFile;
-
-					strcmd = strcmd + inputPath + std::string(listFileRcm[currIdxRcm].cFileName);
-					std::wcout<< inputPath.c_str() <<listFileRcm[currIdxRcm].cFileName;
-				}
-				
-			}
-			else
-			{
-				if(++currIdxRcm >= listFileRcm.size())
-					currIdxRcm = 0;
-
-				while(strcmd.size() > 0 && (strcmd.back() != ' ') && (strcmd.back() != '\\'))
-				{
-					std::wcout<<"\b \b";
-					strcmd.pop_back();
-				}
-				strcmd += std::string(listFileRcm[currIdxRcm].cFileName);
-				std::wcout<< listFileRcm[currIdxRcm].cFileName;
-			}
+			HandleTabKey();
 		} 
 		else
 		{
-			isTabPressed = false;
+			m_isFistTimePressed = false;
 
 			if(ch == 13) //enter key
 			{
 				std::wcout<< std::endl;
-				ExecuteCommand(strcmd.c_str());
+				ExecuteCommand(m_currentCommand.c_str());
 
-				if(strcmd != "cls")
+				if(m_currentCommand != "cls")
 					std::wcout<< std::endl;
 
 				m_CurrentPath = GetCurrentWorkingDir();	
 				PrintWorkingDir(m_CurrentPath);
-				strcmd = "";
+				m_currentCommand = "";
 			}
 			else if(ch == 8) //backspace key
 			{
-				if(strcmd.size() > 0)
+				if(m_currentCommand.size() > 0)
 				{
 					std::wcout<<"\b \b";
-					strcmd.pop_back();
+					m_currentCommand.pop_back();
 				}
 			}
 			else
 			{
-				isTabPressed = false;
-				strcmd += ch;
+				m_isFistTimePressed = false;
+				m_currentCommand += ch;
 				std::wcout<< char(ch);
 			}
 		}
@@ -198,6 +116,9 @@ void Kmd::Init()
 {
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
+	m_isFistTimePressed = false;
+	m_currentCommand	= "";
+	m_currIdxRcm 		= 0;
 	//get and save current attributes of console
 	if (!GetConsoleScreenBufferInfo(hConsole, &info))
 		return;
@@ -326,8 +247,7 @@ void Kmd::ExecuteCommand(const char* _cmd)
 		else if(Utilities::ParseCommand(_cmd) == CommandType::LIST_FILE)
 		{
 			std::vector<WIN32_FIND_DATA> listFiles;
-			std::string currentDir = GetCurrentWorkingDir();
-			Utilities::GetDirectTree(currentDir,listFiles);
+			Utilities::GetListFiles(m_CurrentPath,listFiles);
 			for(auto& i : listFiles)
 			{
 				std::wcout<< i.cFileName <<std::endl;
@@ -340,6 +260,77 @@ void Kmd::ExecuteCommand(const char* _cmd)
 		}
 	}
 }
+
+void Kmd::HandleTabKey()
+{
+    if(!m_isFistTimePressed)
+    {
+        m_currIdxRcm           = 0;
+        m_isFistTimePressed    = true;
+        m_listFileRecommend.clear();
+
+        std::string inputPath       = "";
+        std::string macthFileName   = "";
+
+        while(m_currentCommand.size() > 0 && (m_currentCommand.back() != ' '))
+        {
+            std::wcout<<"\b \b";
+            inputPath += m_currentCommand.back();
+            m_currentCommand.pop_back();
+        }
+
+        std::reverse(inputPath.begin(), inputPath.end());
+        if(inputPath.size() < 2)
+        {
+            Utilities::GetListFiles(m_CurrentPath,m_listFileRecommend);
+            m_currentCommand += std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
+            std::wcout<< m_listFileRecommend[m_currIdxRcm].cFileName;
+        }
+        else 
+        {
+
+            while(inputPath.size() > 0 && (inputPath.back() != '\\'))
+            {
+                macthFileName.push_back(inputPath.back());
+                inputPath.pop_back();
+            }
+            
+            std::reverse(macthFileName.begin(), macthFileName.end());
+            Utilities::GetListFiles(inputPath,m_listFileRecommend);
+
+            std::vector<WIN32_FIND_DATA> filterFile;
+            for(auto& file : m_listFileRecommend)
+            {
+                std::string strFilename = file.cFileName;
+                if(strFilename.rfind(macthFileName,0) == 0)
+                {
+                    filterFile.push_back(file);
+
+                }
+            }
+
+            m_listFileRecommend = filterFile;
+
+            m_currentCommand = m_currentCommand + inputPath + std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
+            std::wcout<< inputPath.c_str() <<m_listFileRecommend[m_currIdxRcm].cFileName;
+        }
+        
+    }
+    else
+    {
+        if(++m_currIdxRcm >= m_listFileRecommend.size())
+            m_currIdxRcm = 0;
+
+        while(m_currentCommand.size() > 0 && (m_currentCommand.back() != ' ') && (m_currentCommand.back() != '\\'))
+        {
+            std::wcout<<"\b \b";
+            m_currentCommand.pop_back();
+        }
+        m_currentCommand += std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
+        std::wcout<< m_listFileRecommend[m_currIdxRcm].cFileName;
+    }
+}
+
 
 int main()
 {
