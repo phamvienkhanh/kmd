@@ -24,8 +24,10 @@ private:
 	bool 		m_isFistTimePressed;
 	std::string m_currentCommand;
 	int 		m_currIdxRcm;
+	int 		m_currIdxHistory;
 
-	std::vector<WIN32_FIND_DATA> m_listFileRecommend;
+	std::vector<WIN32_FIND_DATA>  m_listFileRecommend;
+	std::vector<std::string> 	  m_listHistoryCmd;	
 
 private:
 	Kmd();
@@ -40,8 +42,10 @@ private:
 	void PrintWorkingDir(std::string _path);
 
 	void ExecuteCommand(const char * _cmd);
+	void ClearCommand();
 
 	void HandleTabKey();
+	void HandleArrowKey(char ch);
 
 };
 
@@ -67,6 +71,8 @@ void Kmd::Run()
 	{
 		//wait for get command
 		char ch = _getch();
+		//std::wcout << int(ch);
+		//std::wcout << int( _getch());
 
 		if(ch == 9) //tab key
 		{
@@ -80,6 +86,7 @@ void Kmd::Run()
 			{
 				std::wcout<< std::endl;
 				ExecuteCommand(m_currentCommand.c_str());
+				m_listHistoryCmd.push_back(m_currentCommand);
 
 				if(m_currentCommand != "cls")
 					std::wcout<< std::endl;
@@ -95,6 +102,10 @@ void Kmd::Run()
 					std::wcout<<"\b \b";
 					m_currentCommand.pop_back();
 				}
+			}
+			else if ( ch == -32 ) // up, down, right and left
+			{
+				HandleArrowKey(_getch());
 			}
 			else
 			{
@@ -119,6 +130,7 @@ void Kmd::Init()
 	m_isFistTimePressed = false;
 	m_currentCommand	= "";
 	m_currIdxRcm 		= 0;
+	m_currIdxHistory 	= 0;
 	//get and save current attributes of console
 	if (!GetConsoleScreenBufferInfo(hConsole, &info))
 		return;
@@ -193,11 +205,11 @@ void Kmd::ResetColor()
 void Kmd::PrintWorkingDir(std::string _path)
 {
 	// print symbol 
-	SetColorAndBackground(4, 8);
+	SetColorAndBackground(0, 5);
 	std::wcout << L"KeithPham";
 
 	//
-	SetColorAndBackground(8, 1);
+	SetColorAndBackground(5, 1);
 	std::wcout << L"\ue0b0 ";
 
 	//set color for partition
@@ -258,6 +270,15 @@ void Kmd::ExecuteCommand(const char* _cmd)
 			//execute cmd
 			system(_cmd);
 		}
+	}
+}
+
+void Kmd::ClearCommand()
+{
+	while(m_currentCommand.size() > 0)
+	{
+		std::wcout<<"\b \b";
+		m_currentCommand.pop_back();
 	}
 }
 
@@ -331,6 +352,36 @@ void Kmd::HandleTabKey()
     }
 }
 
+
+void Kmd::HandleArrowKey(char ch)
+{
+	if(m_listHistoryCmd.size() > 0)
+	{
+		if(ch == 72 || ch == 77) // up and right
+		{
+			m_currIdxHistory++;
+		}
+		else if(ch == 75 || ch == 80) // down and right
+		{
+			m_currIdxHistory--;
+		}
+
+		if(m_currIdxHistory >= m_listHistoryCmd.size())
+		{
+			m_currIdxHistory = 0;
+		}
+		else if(m_currIdxHistory < 0)
+		{
+			m_currIdxHistory = m_listHistoryCmd.size() - 1;
+		}
+
+		ClearCommand();
+		m_currentCommand = m_listHistoryCmd[m_currIdxHistory];
+		std::wcout << m_currentCommand.c_str();
+		
+		
+	}
+}
 
 int main()
 {
