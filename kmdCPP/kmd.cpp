@@ -86,7 +86,12 @@ void Kmd::Run()
 			{
 				std::wcout<< std::endl;
 				ExecuteCommand(m_currentCommand.c_str());
-				m_listHistoryCmd.push_back(m_currentCommand);
+
+				if(std::find(m_listHistoryCmd.begin(),m_listHistoryCmd.end(),m_currentCommand) == m_listHistoryCmd.end())
+				{
+					m_listHistoryCmd.push_back(m_currentCommand);
+				}
+
 
 				if(m_currentCommand != "cls")
 					std::wcout<< std::endl;
@@ -366,7 +371,7 @@ void Kmd::HandleArrowKey(char ch)
 			m_currIdxHistory--;
 		}
 
-		if(m_currIdxHistory >= m_listHistoryCmd.size())
+		if(m_currIdxHistory >= (int)m_listHistoryCmd.size())
 		{
 			m_currIdxHistory = 0;
 		}
