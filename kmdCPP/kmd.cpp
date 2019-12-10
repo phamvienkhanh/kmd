@@ -66,7 +66,8 @@ Kmd * Kmd::GetInstance()
 void Kmd::Run()
 {
 
-	m_CurrentPath 				= GetCurrentWorkingDir();
+	m_CurrentPath 	= GetCurrentWorkingDir();
+	m_gitBranch 	= Utilities::GetGitBranch(m_CurrentPath);	
 	PrintWorkingDir(m_CurrentPath);
 
 	while (true)
@@ -87,7 +88,7 @@ void Kmd::Run()
 			if(ch == 13) //enter key
 			{
 				std::wcout<< std::endl;
-				std::wcout<< Utilities::GetGitBranch().c_str() <<std::endl;
+				
 				ExecuteCommand(m_currentCommand.c_str());
 
 				if(std::find(m_listHistoryCmd.begin(),m_listHistoryCmd.end(),m_currentCommand) == m_listHistoryCmd.end())
@@ -242,8 +243,17 @@ void Kmd::PrintWorkingDir(std::string _path)
 	}
 
 	//set color for last symbol |>
-	SetColorAndBackground(2, m_wOldAttributes >> 4);
+	SetColorAndBackground(2, 3);
 	std::wcout << L"\ue0b0 ";
+
+	// print git branch name
+	SetColorAndBackground(8, 3);
+	std::wcout << L"\ue0a0 ";
+	SetColorAndBackground(7, 3);
+	std::wcout << m_gitBranch.c_str() << L" ";
+	SetColorAndBackground(3, m_wOldAttributes >> 4);
+	std::wcout << L"\ue0b0 ";
+
 
 	ResetColor();
 
