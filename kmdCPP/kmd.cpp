@@ -306,48 +306,43 @@ void Kmd::HandleTabKey()
         }
 
         std::reverse(inputPath.begin(), inputPath.end());
-        if(inputPath.size() < 2)
-        {
-            Utilities::GetListFiles(m_CurrentPath,m_listFileRecommend);
-            m_currentCommand += std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
-            std::wcout<< m_listFileRecommend[m_currIdxRcm].cFileName;
-        }
-        else 
-        {
 
-            while(inputPath.size() > 0 && (inputPath.back() != '\\'))
-            {
-                macthFileName.push_back(inputPath.back());
-                inputPath.pop_back();
-            }
-            
-            std::reverse(macthFileName.begin(), macthFileName.end());
-            Utilities::GetListFiles(inputPath,m_listFileRecommend);
+		while(inputPath.size() > 0 && (inputPath.back() != '\\'))
+		{
+			macthFileName.push_back(inputPath.back());
+			inputPath.pop_back();
+		}
 
-            std::vector<WIN32_FIND_DATA> filterFile;
-            for(auto& file : m_listFileRecommend)
-            {
-                std::string strFilename = file.cFileName;
-                if(strFilename.rfind(macthFileName,0) == 0)
-                {
-                    filterFile.push_back(file);
+		if(inputPath.empty())
+		{
+			inputPath = ".\\" + inputPath;
+		}
+		
+		std::reverse(macthFileName.begin(), macthFileName.end());
+		Utilities::GetListFiles(inputPath,m_listFileRecommend);
 
-                }
-            }
+		std::vector<WIN32_FIND_DATA> filterFile;
+		for(auto& file : m_listFileRecommend)
+		{
+			std::string strFilename = file.cFileName;
+			if(strFilename.rfind(macthFileName,0) == 0)
+			{
+				filterFile.push_back(file);
 
-            m_listFileRecommend = filterFile;
+			}
+		}
 
-            m_currentCommand = m_currentCommand + inputPath + std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
-            std::wcout<< inputPath.c_str() <<m_listFileRecommend[m_currIdxRcm].cFileName;
-        }
-        
+		m_listFileRecommend = filterFile;
+
+		m_currentCommand = m_currentCommand + inputPath + std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
+		std::wcout<< inputPath.c_str() <<m_listFileRecommend[m_currIdxRcm].cFileName;
     }
     else
     {
         if(++m_currIdxRcm >= m_listFileRecommend.size())
             m_currIdxRcm = 0;
 
-        while(m_currentCommand.size() > 0 && (m_currentCommand.back() != ' ') && (m_currentCommand.back() != '\\'))
+        while(m_currentCommand.size() > 0 && (m_currentCommand.back() != '\\'))
         {
             std::wcout<<"\b \b";
             m_currentCommand.pop_back();
