@@ -100,7 +100,9 @@ void Kmd::Run()
 				if(m_currentCommand != "cls")
 					std::wcout<< std::endl;
 
-				m_CurrentPath = GetCurrentWorkingDir();	
+				m_CurrentPath 	= GetCurrentWorkingDir();
+				m_gitBranch 	= Utilities::GetGitBranch(m_CurrentPath);
+
 				PrintWorkingDir(m_CurrentPath);
 				m_currentCommand = "";
 			}
@@ -242,17 +244,29 @@ void Kmd::PrintWorkingDir(std::string _path)
 		std::wcout << _dir.c_str();
 	}
 
-	//set color for last symbol |>
-	SetColorAndBackground(2, 3);
-	std::wcout << L"\ue0b0 ";
+	
+	if (m_gitBranch != "")
+	{
 
-	// print git branch name
-	SetColorAndBackground(8, 3);
-	std::wcout << L"\ue0a0 ";
-	SetColorAndBackground(7, 3);
-	std::wcout << m_gitBranch.c_str() << L" ";
-	SetColorAndBackground(3, m_wOldAttributes >> 4);
-	std::wcout << L"\ue0b0 ";
+		//set color for last symbol |>
+		SetColorAndBackground(2, 3);
+		std::wcout << L"\ue0b0 ";
+
+		// print git branch name
+		SetColorAndBackground(14, 3);
+		std::wcout << L"\ue0a0 ";
+		SetColorAndBackground(7, 3);
+		std::wcout << m_gitBranch.c_str() << L" ";
+		SetColorAndBackground(3, m_wOldAttributes >> 4);
+		std::wcout << L"\ue0b0 ";
+	}
+	else
+	{
+		//set color for last symbol |>
+		SetColorAndBackground(2, m_wOldAttributes >> 4);
+		std::wcout << L"\ue0b0 ";
+	}
+	
 
 
 	ResetColor();
