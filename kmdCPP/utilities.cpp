@@ -42,5 +42,4 @@ namespace Utilities
             FindClose(hFind);
         }
     }
-    
 }

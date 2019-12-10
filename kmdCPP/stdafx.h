@@ -21,6 +21,7 @@
 #include <cstring>
 #include <conio.h>
 #include <algorithm>
+#include <stdexcept>
 
 
 

@@ -17,6 +17,8 @@ private:
 
 	WORD			m_wOldAttributes;
 	std::string		m_CurrentPath;
+	std::string 	m_gitBranch;
+
 	static Kmd*		s_Instance;
 
 	CONSOLE_SCREEN_BUFFER_INFO  info;
@@ -85,6 +87,7 @@ void Kmd::Run()
 			if(ch == 13) //enter key
 			{
 				std::wcout<< std::endl;
+				std::wcout<< Utilities::GetGitBranch().c_str() <<std::endl;
 				ExecuteCommand(m_currentCommand.c_str());
 
 				if(std::find(m_listHistoryCmd.begin(),m_listHistoryCmd.end(),m_currentCommand) == m_listHistoryCmd.end())
@@ -136,6 +139,7 @@ void Kmd::Init()
 	m_currentCommand	= "";
 	m_currIdxRcm 		= 0;
 	m_currIdxHistory 	= 0;
+	m_gitBranch 		= "";
 	//get and save current attributes of console
 	if (!GetConsoleScreenBufferInfo(hConsole, &info))
 		return;
@@ -325,7 +329,7 @@ void Kmd::HandleTabKey()
 		for(auto& file : m_listFileRecommend)
 		{
 			std::string strFilename = file.cFileName;
-			if(strFilename.rfind(macthFileName,0) == 0)
+			if(strFilename.find(macthFileName) != std::string::npos)
 			{
 				filterFile.push_back(file);
 
