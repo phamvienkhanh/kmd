@@ -22,6 +22,7 @@
 #include <conio.h>
 #include <algorithm>
 #include <stdexcept>
+#include <locale>
 
 
 

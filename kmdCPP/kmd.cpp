@@ -347,12 +347,14 @@ void Kmd::HandleTabKey()
 		}
 		
 		std::reverse(macthFileName.begin(), macthFileName.end());
+		std::transform(macthFileName.begin(), macthFileName.end(), macthFileName.begin(), [](unsigned char c){ return std::tolower(c); });
 		Utilities::GetListFiles(inputPath,m_listFileRecommend);
 
 		std::vector<WIN32_FIND_DATA> filterFile;
 		for(auto& file : m_listFileRecommend)
 		{
 			std::string strFilename = file.cFileName;
+			std::transform(strFilename.begin(), strFilename.end(), strFilename.begin(), [](unsigned char c){ return std::tolower(c); });
 			if(strFilename.find(macthFileName) != std::string::npos)
 			{
 				filterFile.push_back(file);
@@ -385,13 +387,21 @@ void Kmd::HandleArrowKey(char ch)
 {
 	if(m_listHistoryCmd.size() > 0)
 	{
-		if(ch == 72 || ch == 77) // up and right
+		if( ch == 72 ) // up 
 		{
 			m_currIdxHistory++;
 		}
-		else if(ch == 75 || ch == 80) // down and right
+		else if( ch == 80 ) // down 
 		{
 			m_currIdxHistory--;
+		}
+		else if ( ch == 77 ) // right
+		{
+
+		}
+		else // ch == 75 
+		{
+			std::wcout << "\b";
 		}
 
 		if(m_currIdxHistory >= (int)m_listHistoryCmd.size())
