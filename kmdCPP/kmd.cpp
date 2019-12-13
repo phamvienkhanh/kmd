@@ -295,7 +295,17 @@ void Kmd::ExecuteCommand(const char* _cmd)
 			Utilities::GetListFiles(m_CurrentPath,listFiles);
 			for(auto& i : listFiles)
 			{
-				std::wcout<< i.cFileName <<std::endl;
+				if(i.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
+				{
+					SetColorAndBackground(2, m_wOldAttributes >> 4);
+					std::wcout<< i.cFileName <<std::endl;
+					ResetColor();
+				}
+				else
+				{
+					std::wcout<< i.cFileName << std::endl;
+				}
+
 			}
 		}
 		else
