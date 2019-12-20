@@ -216,13 +216,13 @@ void Kmd::SetColorAndBackground(char fr, char bg)
 {
 	// colorattribute = foreground + background * 16
 	//0 = Black 8 = Gray
-	//1 = Blue 9 = Light Blue
-	//2 = Green a = Light Green
-	//3 = Aqua b = Light Aqua
-	//4 = Red c = Light Red
-	//5 = Purple d = Light Purple
-	//6 = Yellow e = Light Yellow
-	//7 = White f = Bright White
+	//1 = Blue 9 = LightBlue
+	//2 = Green a = LightGreen
+	//3 = Aqua b = LightAqua
+	//4 = Red c = LightRed
+	//5 = Purple d = LightPurple
+	//6 = Yellow e = LightYellow
+	//7 = White f = BrightWhite
 
 	unsigned char _color = 0;
 	_color = (bg << 4) | fr;
@@ -238,23 +238,23 @@ void Kmd::ResetColor()
 void Kmd::PrintWorkingDir(std::string _path)
 {
 	// print symbol 
-	SetColorAndBackground(0, 5);
+	SetColorAndBackground(EColor::Black, EColor::Purple);
 	std::wcout << L"KeithPham";
 
 	//
-	SetColorAndBackground(5, 1);
+	SetColorAndBackground(EColor::Purple, EColor::Blue);
 	std::wcout << L"\ue0b0 ";
 
 	//set color for partition
-	SetColorAndBackground(14, 1); //white - blue
+	SetColorAndBackground(EColor::LightYellow, EColor::Blue); //white - blue
 	std::wcout << _path[0] << L" ";
 
 	//set color for symbol |>
-	SetColorAndBackground(1, 2); //blue - green
+	SetColorAndBackground(EColor::Blue, EColor::Green); //blue - green
 	std::wcout << L"\ue0b0 ";
 
 	//set color for dir
-	SetColorAndBackground(0, 2); //black - green
+	SetColorAndBackground(EColor::Black, EColor::Green); //black - green
 	std::string _dir;
 	if (ShortDir(_path, _dir))
 	{
@@ -270,21 +270,21 @@ void Kmd::PrintWorkingDir(std::string _path)
 	{
 
 		//set color for last symbol |>
-		SetColorAndBackground(2, 3);
+		SetColorAndBackground(EColor::Green, EColor::Aqua);
 		std::wcout << L"\ue0b0 ";
 
 		// print git branch name
-		SetColorAndBackground(14, 3);
+		SetColorAndBackground(EColor::LightYellow, EColor::Aqua);
 		std::wcout << L"\ue0a0 ";
-		SetColorAndBackground(7, 3);
+		SetColorAndBackground(EColor::White, EColor::Aqua);
 		std::wcout << m_gitBranch.c_str() << L" ";
-		SetColorAndBackground(3, m_wOldAttributes >> 4);
+		SetColorAndBackground(EColor::Aqua, m_wOldAttributes >> 4);
 		std::wcout << L"\ue0b0 ";
 	}
 	else
 	{
 		//set color for last symbol |>
-		SetColorAndBackground(2, m_wOldAttributes >> 4);
+		SetColorAndBackground(EColor::Green, m_wOldAttributes >> 4);
 		std::wcout << L"\ue0b0 ";
 	}
 	
@@ -318,7 +318,7 @@ void Kmd::ExecuteCommand(const char* _cmd)
 			{
 				if(i.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
 				{
-					SetColorAndBackground(2, m_wOldAttributes >> 4);
+					SetColorAndBackground(EColor::Green, m_wOldAttributes >> 4);
 					std::wcout<< i.cFileName <<std::endl;
 					ResetColor();
 				}

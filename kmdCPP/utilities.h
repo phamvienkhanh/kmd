@@ -16,6 +16,29 @@ enum CommandType
 	COUNT
 };
 
+enum EColor
+{
+	Black = 0,
+	Blue,
+	Green,
+	Aqua,
+	Red,
+	Purple,
+	Yellow,
+	White,
+	Gray,
+	LightBlue,
+	LightGreen,
+	LightAqua,
+	LightRed,
+	LightPurple,
+	LightYellow,
+	BrightWhite,
+
+	COUNT_COLOR
+
+};
+
 namespace Utilities 
 {
     CommandType ParseCommand(const char* _cmd);

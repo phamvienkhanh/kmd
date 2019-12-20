@@ -1,1 +1,1 @@
-g++ kmd.cpp stdafx.cpp utilities.cpp -static-libstdc++ -o kmd.exe
+g++ kmd.cpp stdafx.cpp utilities.cpp -O2 -static-libstdc++ -o kmd.exe
