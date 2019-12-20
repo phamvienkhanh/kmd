@@ -26,4 +26,6 @@ namespace Utilities
 
 	std::string GetGitBranch(std::string currentPath);
     std::string exec(const char* cmd);
+
+    COORD GetConsoleCursorPosition(HANDLE hConsoleOutput);
 }

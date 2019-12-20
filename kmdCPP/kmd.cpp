@@ -14,19 +14,21 @@ public:
 
 private:
 	HANDLE			hConsole;
+	
+
+	static Kmd*		s_Instance;
 
 	WORD			m_wOldAttributes;
 	std::string		m_CurrentPath;
 	std::string 	m_gitBranch;
 
-	static Kmd*		s_Instance;
+	COORD 			m_endLinePos;
+	COORD           m_currCursorPos;
 
-	CONSOLE_SCREEN_BUFFER_INFO  info;
-
-	bool 		m_isFistTimePressed;
-	std::string m_currentCommand;
-	int 		m_currIdxRcm;
-	int 		m_currIdxHistory;
+	bool 			m_isFistTimePressed;
+	int 			m_currIdxRcm;
+	int 			m_currIdxHistory;
+	std::string 	m_currentCommand;
 
 	std::vector<WIN32_FIND_DATA>  m_listFileRecommend;
 	std::vector<std::string> 	  m_listHistoryCmd;	
@@ -48,6 +50,8 @@ private:
 
 	void HandleTabKey();
 	void HandleArrowKey(char ch);
+
+	void UpdateCursorPos(bool shouldUpdateEndLinePos);
 
 };
 
@@ -105,6 +109,8 @@ void Kmd::Run()
 
 				PrintWorkingDir(m_CurrentPath);
 				m_currentCommand = "";
+
+				UpdateCursorPos(true);
 			}
 			else if(ch == 8) //backspace key
 			{
@@ -112,17 +118,27 @@ void Kmd::Run()
 				{
 					std::wcout<<"\b \b";
 					m_currentCommand.pop_back();
+					UpdateCursorPos(true);
 				}
 			}
 			else if ( ch == -32 ) // up, down, right and left
 			{
 				HandleArrowKey(_getch());
+				UpdateCursorPos(false);
+			}
+			else if ( ch == 77 || ch == 70 || ch == 75 || ch == 80)
+			{
+				HandleArrowKey(ch);
+				UpdateCursorPos(false);
 			}
 			else
 			{
 				m_isFistTimePressed = false;
 				m_currentCommand += ch;
+
 				std::wcout<< char(ch);
+
+				UpdateCursorPos(true);
 			}
 		}
 		
@@ -143,9 +159,14 @@ void Kmd::Init()
 	m_currIdxRcm 		= 0;
 	m_currIdxHistory 	= 0;
 	m_gitBranch 		= "";
-	//get and save current attributes of console
+	m_endLinePos 		= {0,0};
+	m_currCursorPos     = {0,0};
+
+	//get and save current attributes color of console
+	CONSOLE_SCREEN_BUFFER_INFO  info;
 	if (!GetConsoleScreenBufferInfo(hConsole, &info))
 		return;
+
 	m_wOldAttributes = info.wAttributes;
 
 	SetConsoleTitle("KityKeith-Kmd");
@@ -395,40 +416,54 @@ void Kmd::HandleTabKey()
 
 void Kmd::HandleArrowKey(char ch)
 {
-	if(m_listHistoryCmd.size() > 0)
+	if ( ch == 77 ) // right
 	{
-		if( ch == 72 ) // up 
-		{
-			m_currIdxHistory++;
-		}
-		else if( ch == 80 ) // down 
-		{
-			m_currIdxHistory--;
-		}
-		else if ( ch == 77 ) // right
-		{
-
-		}
-		else // ch == 75 
-		{
-			std::wcout << "\b";
-		}
-
-		if(m_currIdxHistory >= (int)m_listHistoryCmd.size())
-		{
-			m_currIdxHistory = 0;
-		}
-		else if(m_currIdxHistory < 0)
-		{
-			m_currIdxHistory = m_listHistoryCmd.size() - 1;
-		}
-
-		ClearCommand();
-		m_currentCommand = m_listHistoryCmd[m_currIdxHistory];
-		std::wcout << m_currentCommand.c_str();
-		
-		
+		COORD pos = Utilities::GetConsoleCursorPosition(hConsole);
+		if(pos.X++ < m_endLinePos.X)
+			SetConsoleCursorPosition(hConsole,pos);
 	}
+	else if ( ch == 75 ) 
+	{
+		COORD pos = Utilities::GetConsoleCursorPosition(hConsole);
+		if(pos.X-- > 2)
+			SetConsoleCursorPosition(hConsole,pos);
+	}
+	else
+	{
+		if(m_listHistoryCmd.size() > 0)
+		{
+			if( ch == 72 ) // up 
+			{
+				m_currIdxHistory++;
+			}
+			else //if( ch == 80 ) // down 
+			{
+				m_currIdxHistory--;
+			}
+			
+
+			if(m_currIdxHistory >= (int)m_listHistoryCmd.size())
+			{
+				m_currIdxHistory = 0;
+			}
+			else if(m_currIdxHistory < 0)
+			{
+				m_currIdxHistory = m_listHistoryCmd.size() - 1;
+			}
+
+			ClearCommand();
+			m_currentCommand = m_listHistoryCmd[m_currIdxHistory];
+			std::wcout << m_currentCommand.c_str();
+		}
+	}
+}
+
+void Kmd::UpdateCursorPos(bool shouldUpdateEndLinePos)
+{
+	m_currCursorPos = Utilities::GetConsoleCursorPosition(hConsole);
+
+	if(shouldUpdateEndLinePos)
+		m_endLinePos = m_currCursorPos;
 }
 
 int main()
