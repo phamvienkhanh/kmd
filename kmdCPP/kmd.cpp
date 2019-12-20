@@ -14,7 +14,6 @@ public:
 
 private:
 	HANDLE			hConsole;
-	
 
 	static Kmd*		s_Instance;
 
@@ -28,6 +27,7 @@ private:
 	bool 			m_isFistTimePressed;
 	int 			m_currIdxRcm;
 	int 			m_currIdxHistory;
+	int    			m_currIdxCommand; // position of cursor on command
 	std::string 	m_currentCommand;
 
 	std::vector<WIN32_FIND_DATA>  m_listFileRecommend;
@@ -57,7 +57,7 @@ private:
 
 Kmd* Kmd::s_Instance = nullptr;
 
-Kmd * Kmd::GetInstance()
+Kmd* Kmd::GetInstance()
 {
 	if (s_Instance == nullptr)
 	{
@@ -109,6 +109,7 @@ void Kmd::Run()
 
 				PrintWorkingDir(m_CurrentPath);
 				m_currentCommand = "";
+				m_currIdxCommand = 0;
 
 				UpdateCursorPos(true);
 			}
@@ -126,7 +127,7 @@ void Kmd::Run()
 				HandleArrowKey(_getch());
 				UpdateCursorPos(false);
 			}
-			else if ( ch == 77 || ch == 70 || ch == 75 || ch == 80)
+			else if ( ch == 77 || ch == 72 || ch == 75 || ch == 80)
 			{
 				HandleArrowKey(ch);
 				UpdateCursorPos(false);
@@ -134,11 +135,21 @@ void Kmd::Run()
 			else
 			{
 				m_isFistTimePressed = false;
-				m_currentCommand += ch;
 
-				std::wcout<< char(ch);
-
-				UpdateCursorPos(true);
+				if(m_endLinePos.X == m_currCursorPos.X)
+				{
+					m_currentCommand += ch;
+					std::wcout<< char(ch);
+					UpdateCursorPos(true);
+				}
+				else
+				{
+					m_currentCommand.insert(m_currIdxCommand,1,ch);
+					std::wcout<< m_currentCommand.substr(m_currIdxCommand).c_str();
+					m_currCursorPos.X++;
+					SetConsoleCursorPosition(hConsole,m_currCursorPos);
+					UpdateCursorPos(false);
+				}
 			}
 		}
 		
@@ -158,6 +169,7 @@ void Kmd::Init()
 	m_currentCommand	= "";
 	m_currIdxRcm 		= 0;
 	m_currIdxHistory 	= 0;
+	m_currIdxCommand 	= 0;
 	m_gitBranch 		= "";
 	m_endLinePos 		= {0,0};
 	m_currCursorPos     = {0,0};
@@ -460,7 +472,8 @@ void Kmd::HandleArrowKey(char ch)
 
 void Kmd::UpdateCursorPos(bool shouldUpdateEndLinePos)
 {
-	m_currCursorPos = Utilities::GetConsoleCursorPosition(hConsole);
+	m_currCursorPos   = Utilities::GetConsoleCursorPosition(hConsole);
+	m_currIdxCommand  = m_currCursorPos.X - 2;
 
 	if(shouldUpdateEndLinePos)
 		m_endLinePos = m_currCursorPos;
