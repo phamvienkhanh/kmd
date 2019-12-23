@@ -1,0 +1,21 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Console\D:_trash_kmd_kmd_kmdCPP_kmd.exe]
+"ColorTable00"=dword:00222827
+"ColorTable01"=dword:00F0F8F8
+"ColorTable02"=dword:001ABB85
+"ColorTable03"=dword:0074DBE6
+"ColorTable04"=dword:001F97FD
+"ColorTable05"=dword:00FF81AE
+"ColorTable06"=dword:0090A2A5
+"ColorTable07"=dword:00F2F8F8
+"ColorTable08"=dword:0090A2A5
+"ColorTable09"=dword:00EFD966
+"ColorTable10"=dword:002EE2A6
+"ColorTable11"=dword:00EFD966
+"ColorTable12"=dword:004D06CB
+"ColorTable13"=dword:007226F9
+"ColorTable14"=dword:001F97FD
+"ColorTable15"=dword:00F0F8F8
+"ScreenColors"=dword:00000001
+"PopupColors"=dword:000000f6
