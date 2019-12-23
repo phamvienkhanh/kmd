@@ -127,11 +127,11 @@ void Kmd::Run()
 				HandleArrowKey(_getch());
 				UpdateCursorPos(false);
 			}
-			else if ( ch == 77 || ch == 72 || ch == 75 || ch == 80)
+			/*else if ( ch == 77 || ch == 72 || ch == 75 || ch == 80)
 			{
 				HandleArrowKey(ch);
 				UpdateCursorPos(false);
-			}
+			}*/
 			else
 			{
 				m_isFistTimePressed = false;
