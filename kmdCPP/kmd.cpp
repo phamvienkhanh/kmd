@@ -192,6 +192,8 @@ std::string Kmd::GetCurrentWorkingDir()
 	char buff[FILENAME_MAX];
 	GetCurrentDir(buff, FILENAME_MAX);
 	std::string current_working_dir(buff);
+	std::string title = " --o0Kmd0o--   " + current_working_dir ;
+	SetConsoleTitle(title.c_str());
 	return current_working_dir;
 }
 
