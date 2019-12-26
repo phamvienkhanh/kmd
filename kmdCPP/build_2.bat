@@ -1,1 +1,1 @@
-g++ test.cpp stdafx.cpp -static-libstdc++ -lgdi32 -o kmd.exe
+g++ test.cpp stdafx.cpp -static-libstdc++ -o test.exe
