@@ -189,19 +189,22 @@ void Kmd::KeyEventProc(KEY_EVENT_RECORD ker)
 			{
 				m_isFistTimePressed = false;
 
-				if(m_endLinePos.X == m_currCursorPos.X)
+				if(ker.uChar.AsciiChar != '\0')
 				{
-					m_currentCommand += ker.uChar.AsciiChar;
-					std::wcout<< ker.uChar.AsciiChar;
-					UpdateCursorPos(true);
-				}
-				else
-				{
-					m_currentCommand.insert(m_currIdxCommand,1,ker.uChar.AsciiChar);
-					std::wcout<< m_currentCommand.substr(m_currIdxCommand).c_str();
-					m_currCursorPos.X++;
-					SetConsoleCursorPosition(hConsoleOut,m_currCursorPos);
-					UpdateCursorPos(false);
+					if(m_endLinePos.X == m_currCursorPos.X)
+					{
+						m_currentCommand += ker.uChar.AsciiChar;
+						std::wcout<< ker.uChar.AsciiChar;
+						UpdateCursorPos(true);
+					}
+					else
+					{
+						m_currentCommand.insert(m_currIdxCommand,1,ker.uChar.AsciiChar);
+						std::wcout<< m_currentCommand.substr(m_currIdxCommand).c_str();
+						m_currCursorPos.X++;
+						SetConsoleCursorPosition(hConsoleOut,m_currCursorPos);
+						UpdateCursorPos(false);
+					}
 				}
 			}
 		}
