@@ -1,59 +1,7 @@
 // kmd.cpp : Defines the entry point for the console application.
-//
 
-#include "utilities.h"
-//singleton class
-class Kmd
-{
-public:
-	static Kmd* GetInstance();
+#include "kmd.h"
 
-	void Run();
-
-	std::string GetCurrentWorkingDir();
-
-private:
-	HANDLE			hConsole;
-
-	static Kmd*		s_Instance;
-
-	WORD			m_wOldAttributes;
-	std::string		m_CurrentPath;
-	std::string 	m_gitBranch;
-
-	COORD 			m_endLinePos;
-	COORD           m_currCursorPos;
-
-	bool 			m_isFistTimePressed;
-	int 			m_currIdxRcm;
-	int 			m_currIdxHistory;
-	int    			m_currIdxCommand; // position of cursor on command
-	std::string 	m_currentCommand;
-
-	std::vector<WIN32_FIND_DATA>  m_listFileRecommend;
-	std::vector<std::string> 	  m_listHistoryCmd;	
-
-private:
-	Kmd();
-
-	void Init();
-	
-	bool ShortDir(std::string _mdir, std::string &_rs);
-	void SetColorAndBackground(char fr, char bg);
-
-	void ResetColor();
-
-	void PrintWorkingDir(std::string _path);
-
-	void ExecuteCommand(const char * _cmd);
-	void ClearCommand();
-
-	void HandleTabKey();
-	void HandleArrowKey(char ch);
-
-	void UpdateCursorPos(bool shouldUpdateEndLinePos);
-
-};
 
 Kmd* Kmd::s_Instance = nullptr;
 
@@ -69,91 +17,64 @@ Kmd* Kmd::GetInstance()
 
 void Kmd::Run()
 {
-
 	m_CurrentPath 	= GetCurrentWorkingDir();
 	m_gitBranch 	= Utilities::GetGitBranch(m_CurrentPath);	
 	PrintWorkingDir(m_CurrentPath);
 
+//std::wcout<<"Kmd::KeyEventProc \n";
+
+	DWORD cNumRead, fdwMode, fdwSaveOldMode; 
+    INPUT_RECORD irInBuf[128]; 
+//std::wcout<<"Kmd::KeyEventProc \n";
+
+    if (! GetConsoleMode(hConsoleIn, &fdwSaveOldMode) ) 
+        ErrorExit("GetConsoleMode"); 
+
+//std::wcout<<"Kmd::KeyEventProc \n";
+    // Enable the window and mouse input events. 
+ 
+    fdwMode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT; 
+    if (! SetConsoleMode(hConsoleIn, fdwMode) ) 
+        ErrorExit("SetConsoleMode");
+//std::wcout<<"Kmd::KeyEventProc \n";
 	while (true)
 	{
+//std::wcout<<"Kmd::KeyEventProc \n";
 		//wait for get command
-		char ch = _getch();
-		//std::wcout << int(ch);
-		//std::wcout << int( _getch());
-
-		if(ch == 9) //tab key
-		{
-			HandleTabKey();
-		} 
-		else
-		{
-			m_isFistTimePressed = false;
-
-			if(ch == 13) //enter key
-			{
-				std::wcout<< std::endl;
-				
-				ExecuteCommand(m_currentCommand.c_str());
-
-				if(std::find(m_listHistoryCmd.begin(),m_listHistoryCmd.end(),m_currentCommand) == m_listHistoryCmd.end())
-				{
-					m_listHistoryCmd.push_back(m_currentCommand);
-				}
-
-
-				if(m_currentCommand != "cls")
-					std::wcout<< std::endl;
-
-				m_CurrentPath 	= GetCurrentWorkingDir();
-				m_gitBranch 	= Utilities::GetGitBranch(m_CurrentPath);
-
-				PrintWorkingDir(m_CurrentPath);
-				m_currentCommand = "";
-				m_currIdxCommand = 0;
-
-				UpdateCursorPos(true);
-			}
-			else if(ch == 8) //backspace key
-			{
-				if(m_currentCommand.size() > 0)
-				{
-					std::wcout<<"\b \b";
-					m_currentCommand.pop_back();
-					UpdateCursorPos(true);
-				}
-			}
-			else if ( ch == -32 ) // up, down, right and left
-			{
-				HandleArrowKey(_getch());
-				UpdateCursorPos(false);
-			}
-			/*else if ( ch == 77 || ch == 72 || ch == 75 || ch == 80)
-			{
-				HandleArrowKey(ch);
-				UpdateCursorPos(false);
-			}*/
-			else
-			{
-				m_isFistTimePressed = false;
-
-				if(m_endLinePos.X == m_currCursorPos.X)
-				{
-					m_currentCommand += ch;
-					std::wcout<< char(ch);
-					UpdateCursorPos(true);
-				}
-				else
-				{
-					m_currentCommand.insert(m_currIdxCommand,1,ch);
-					std::wcout<< m_currentCommand.substr(m_currIdxCommand).c_str();
-					m_currCursorPos.X++;
-					SetConsoleCursorPosition(hConsole,m_currCursorPos);
-					UpdateCursorPos(false);
-				}
-			}
-		}
-		
+		if (! ReadConsoleInput(hConsoleIn, irInBuf, 128, &cNumRead)) 
+            ErrorExit("ReadConsoleInput");
+//std::wcout<<"Kmd::KeyEventProc \n";
+		// Dispatch the events to the appropriate handler. 
+        for (WORD i = 0; i < cNumRead; i++) 
+        {
+            switch(irInBuf[i].EventType) 
+            { 
+                case KEY_EVENT: // keyboard input 
+                    KeyEventProc(irInBuf[i].Event.KeyEvent); 
+                    break; 
+ 
+                case MOUSE_EVENT: // mouse input 
+                    MouseEventProc(irInBuf[i].Event.MouseEvent); 
+                    break; 
+ 
+                case WINDOW_BUFFER_SIZE_EVENT: // scrn buf. resizing 
+                    ResizeEventProc( irInBuf[i].Event.WindowBufferSizeEvent ); 
+                    break; 
+ 
+                case FOCUS_EVENT:  // disregard focus events 
+ 
+                case MENU_EVENT:   // disregard menu events 
+                    break; 
+ 
+                default:
+                	std::wcout<<"Kmd::KeyEventProc \n";
+                    ErrorExit("Unknown event type"); 
+                    break; 
+            } 
+        }
 	}
+
+	SetConsoleMode(hConsoleIn, fdwSaveOldMode);
 }
 
 Kmd::Kmd()
@@ -163,8 +84,8 @@ Kmd::Kmd()
 
 void Kmd::Init()
 {
-	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
+	hConsoleOut 		= GetStdHandle(STD_OUTPUT_HANDLE);
+	hConsoleIn 			= GetStdHandle(STD_INPUT_HANDLE); 
 	m_isFistTimePressed = false;
 	m_currentCommand	= "";
 	m_currIdxRcm 		= 0;
@@ -176,7 +97,7 @@ void Kmd::Init()
 
 	//get and save current attributes color of console
 	CONSOLE_SCREEN_BUFFER_INFO  info;
-	if (!GetConsoleScreenBufferInfo(hConsole, &info))
+	if (!GetConsoleScreenBufferInfo(hConsoleOut, &info))
 		return;
 
 	m_wOldAttributes = info.wAttributes;
@@ -240,13 +161,13 @@ void Kmd::SetColorAndBackground(char fr, char bg)
 
 	unsigned char _color = 0;
 	_color = (bg << 4) | fr;
-	SetConsoleTextAttribute(hConsole, _color);
+	SetConsoleTextAttribute(hConsoleOut, _color);
 }
 
 void Kmd::ResetColor()
 {
 	//reset color into oldColor 
-	SetConsoleTextAttribute(hConsole, m_wOldAttributes);
+	SetConsoleTextAttribute(hConsoleOut, m_wOldAttributes);
 }
 
 void Kmd::PrintWorkingDir(std::string _path)
@@ -358,127 +279,6 @@ void Kmd::ClearCommand()
 		std::wcout<<"\b \b";
 		m_currentCommand.pop_back();
 	}
-}
-
-void Kmd::HandleTabKey()
-{
-    if(!m_isFistTimePressed)
-    {
-        m_currIdxRcm           = 0;
-        m_isFistTimePressed    = true;
-        m_listFileRecommend.clear();
-
-        std::string inputPath       = "";
-        std::string macthFileName   = "";
-
-        while(m_currentCommand.size() > 0 && (m_currentCommand.back() != ' '))
-        {
-            std::wcout<<"\b \b";
-            inputPath += m_currentCommand.back();
-            m_currentCommand.pop_back();
-        }
-
-        std::reverse(inputPath.begin(), inputPath.end());
-
-		while(inputPath.size() > 0 && (inputPath.back() != '\\'))
-		{
-			macthFileName.push_back(inputPath.back());
-			inputPath.pop_back();
-		}
-
-		if(inputPath.empty())
-		{
-			inputPath = ".\\" + inputPath;
-		}
-		
-		std::reverse(macthFileName.begin(), macthFileName.end());
-		std::transform(macthFileName.begin(), macthFileName.end(), macthFileName.begin(), [](unsigned char c){ return std::tolower(c); });
-		Utilities::GetListFiles(inputPath,m_listFileRecommend);
-
-		std::vector<WIN32_FIND_DATA> filterFile;
-		for(auto& file : m_listFileRecommend)
-		{
-			std::string strFilename = file.cFileName;
-			std::transform(strFilename.begin(), strFilename.end(), strFilename.begin(), [](unsigned char c){ return std::tolower(c); });
-			if(strFilename.find(macthFileName) != std::string::npos)
-			{
-				filterFile.push_back(file);
-
-			}
-		}
-
-		m_listFileRecommend = filterFile;
-
-		m_currentCommand = m_currentCommand + inputPath + std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
-		std::wcout<< inputPath.c_str() <<m_listFileRecommend[m_currIdxRcm].cFileName;
-    }
-    else
-    {
-        if(++m_currIdxRcm >= m_listFileRecommend.size())
-            m_currIdxRcm = 0;
-
-        while(m_currentCommand.size() > 0 && (m_currentCommand.back() != '\\'))
-        {
-            std::wcout<<"\b \b";
-            m_currentCommand.pop_back();
-        }
-        m_currentCommand += std::string(m_listFileRecommend[m_currIdxRcm].cFileName);
-        std::wcout<< m_listFileRecommend[m_currIdxRcm].cFileName;
-    }
-}
-
-
-void Kmd::HandleArrowKey(char ch)
-{
-	if ( ch == 77 ) // right
-	{
-		COORD pos = Utilities::GetConsoleCursorPosition(hConsole);
-		if(pos.X++ < m_endLinePos.X)
-			SetConsoleCursorPosition(hConsole,pos);
-	}
-	else if ( ch == 75 ) 
-	{
-		COORD pos = Utilities::GetConsoleCursorPosition(hConsole);
-		if(pos.X-- > 2)
-			SetConsoleCursorPosition(hConsole,pos);
-	}
-	else
-	{
-		if(m_listHistoryCmd.size() > 0)
-		{
-			if( ch == 72 ) // up 
-			{
-				m_currIdxHistory++;
-			}
-			else //if( ch == 80 ) // down 
-			{
-				m_currIdxHistory--;
-			}
-			
-
-			if(m_currIdxHistory >= (int)m_listHistoryCmd.size())
-			{
-				m_currIdxHistory = 0;
-			}
-			else if(m_currIdxHistory < 0)
-			{
-				m_currIdxHistory = m_listHistoryCmd.size() - 1;
-			}
-
-			ClearCommand();
-			m_currentCommand = m_listHistoryCmd[m_currIdxHistory];
-			std::wcout << m_currentCommand.c_str();
-		}
-	}
-}
-
-void Kmd::UpdateCursorPos(bool shouldUpdateEndLinePos)
-{
-	m_currCursorPos   = Utilities::GetConsoleCursorPosition(hConsole);
-	m_currIdxCommand  = m_currCursorPos.X - 2;
-
-	if(shouldUpdateEndLinePos)
-		m_endLinePos = m_currCursorPos;
 }
 
 int main()

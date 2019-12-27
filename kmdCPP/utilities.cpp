@@ -97,10 +97,10 @@ namespace Utilities
         return gitbranchName;
     }
 
-    COORD GetConsoleCursorPosition(HANDLE hConsoleOutput)
+    COORD GetConsoleCursorPosition(HANDLE hConsoleOutOutput)
     {
         CONSOLE_SCREEN_BUFFER_INFO cbsi;
-        if (GetConsoleScreenBufferInfo(hConsoleOutput, &cbsi))
+        if (GetConsoleScreenBufferInfo(hConsoleOutOutput, &cbsi))
         {
             return cbsi.dwCursorPosition;
         }

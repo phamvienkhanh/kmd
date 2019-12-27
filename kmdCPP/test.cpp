@@ -1,128 +1,159 @@
 ﻿#include "stdafx.h"
-#include "utilities.h"
 
-using namespace std;
-int currTagetMenu = 0;
-HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); // used for goto
-COORD CursorPosition; // used for goto
+HANDLE hStdin; 
+DWORD fdwSaveOldMode;
 
-void gotoXY(int,int); // function defined below if this is new to you.
-
-COORD GetConsoleCursorPosition(HANDLE hConsoleOutput)
-{
-    CONSOLE_SCREEN_BUFFER_INFO cbsi;
-    if (GetConsoleScreenBufferInfo(hConsoleOutput, &cbsi))
-    {
-        return cbsi.dwCursorPosition;
-    }
-    else
-    {
-        COORD invalid = { 0, 0 };
-        return invalid;
-    }
-}
-
-
-void gotoXY(int x, int y) 
+VOID ErrorExit(LPSTR);
+VOID KeyEventProc(KEY_EVENT_RECORD); 
+VOID MouseEventProc(MOUSE_EVENT_RECORD); 
+VOID ResizeEventProc(WINDOW_BUFFER_SIZE_RECORD); 
+ 
+int main(VOID) 
 { 
-	CursorPosition.X = x; 
-	CursorPosition.Y = y; 
-	SetConsoleCursorPosition(hConsole,CursorPosition); 
+    DWORD cNumRead, fdwMode, i; 
+    INPUT_RECORD irInBuf[128]; 
+    int counter=0;
+ 
+    // Get the standard input handle. 
+ 
+    hStdin = GetStdHandle(STD_INPUT_HANDLE); 
+    if (hStdin == INVALID_HANDLE_VALUE) 
+        ErrorExit("GetStdHandle"); 
+ 
+    // Save the current input mode, to be restored on exit. 
+ 
+    if (! GetConsoleMode(hStdin, &fdwSaveOldMode) ) 
+        ErrorExit("GetConsoleMode"); 
+
+    // Enable the window and mouse input events. 
+ 
+    fdwMode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT; 
+    if (! SetConsoleMode(hStdin, fdwMode) ) 
+        ErrorExit("SetConsoleMode"); 
+ 
+    // Loop to read and handle the next 100 input events. 
+ 
+    while (counter++ <= 100) 
+    { 
+        // Wait for the events. 
+ 
+        if (! ReadConsoleInput( 
+                hStdin,      // input buffer handle 
+                irInBuf,     // buffer to read into 
+                128,         // size of read buffer 
+                &cNumRead) ) // number of records read 
+            ErrorExit("ReadConsoleInput"); 
+ 
+        // Dispatch the events to the appropriate handler. 
+ 
+        for (i = 0; i < cNumRead; i++) 
+        {
+            switch(irInBuf[i].EventType) 
+            { 
+                case KEY_EVENT: // keyboard input 
+                    KeyEventProc(irInBuf[i].Event.KeyEvent); 
+                    break; 
+ 
+                case MOUSE_EVENT: // mouse input 
+                    MouseEventProc(irInBuf[i].Event.MouseEvent); 
+                    break; 
+ 
+                case WINDOW_BUFFER_SIZE_EVENT: // scrn buf. resizing 
+                    ResizeEventProc( irInBuf[i].Event.WindowBufferSizeEvent ); 
+                    break; 
+ 
+                case FOCUS_EVENT:  // disregard focus events 
+ 
+                case MENU_EVENT:   // disregard menu events 
+                    break; 
+ 
+                default: 
+                    ErrorExit("Unknown event type"); 
+                    break; 
+            } 
+        }
+    } 
+
+    // Restore input mode on exit.
+
+    SetConsoleMode(hStdin, fdwSaveOldMode);
+ 
+    return 0; 
 }
 
-void ClearScreen(int top, int left, int bottom, int right)
-{
-	std::string spaceChar(right - left,' ');
-	for(int i = top+1; i <= bottom; i++ )
-	{
-		gotoXY(i,left);
-		std::cout << spaceChar;
-	}
+VOID ErrorExit (LPSTR lpszMessage) 
+{ 
+    fprintf(stderr, "%s\n", lpszMessage); 
 
-	gotoXY(top,left);
+    // Restore input mode on exit.
+
+    SetConsoleMode(hStdin, fdwSaveOldMode);
+
+    ExitProcess(0); 
 }
 
-void GetDirectTree(const std::string& name, std::vector<WIN32_FIND_DATA>& v)
+VOID KeyEventProc(KEY_EVENT_RECORD ker)
 {
-    std::string pattern(name);
-    pattern.append("\\*");
-    WIN32_FIND_DATA data;
-    HANDLE hFind;
-    if ((hFind = FindFirstFile(pattern.c_str(), &data)) != INVALID_HANDLE_VALUE) 
+    printf("========================================= \n");
+
+    if(ker.bKeyDown)
     {
-        do {
-            v.push_back(data);
-        } while (FindNextFile(hFind, &data) != 0);
-        FindClose(hFind);
+        printf("bKeyDown            : %d\n" , ker.bKeyDown);
+    	printf("wRepeatCount        : %d\n" , ker.wRepeatCount);
+    	printf("wVirtualKeyCode     : %d\n" , ker.wVirtualKeyCode);
+    	printf("wVirtualScanCode    : %d\n" , ker.wVirtualScanCode);
+    	printf("AsciiChar           : %c\n" , ker.uChar.AsciiChar);
+    	printf("UnicodeChar         : %c\n" , ker.uChar.UnicodeChar);
+    	printf("dwControlKeyState   : %d\n" , ker.dwControlKeyState);
+
+    }
+   // else printf("key released\n");
+}
+
+VOID MouseEventProc(MOUSE_EVENT_RECORD mer)
+{
+#ifndef MOUSE_HWHEELED
+#define MOUSE_HWHEELED 0x0008
+#endif
+    printf("Mouse event: ");
+    
+    switch(mer.dwEventFlags)
+    {
+        case 0:
+
+            if(mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED)
+            {
+                printf("left button press \n");
+            }
+            else if(mer.dwButtonState == RIGHTMOST_BUTTON_PRESSED)
+            {
+                printf("right button press \n");
+            }
+            else
+            {
+                printf("button press\n");
+            }
+            break;
+        case DOUBLE_CLICK:
+            printf("double click\n");
+            break;
+        case MOUSE_HWHEELED:
+            printf("horizontal mouse wheel\n");
+            break;
+        case MOUSE_MOVED:
+            printf("mouse moved\n");
+            break;
+        case MOUSE_WHEELED:
+            printf("vertical mouse wheel\n");
+            break;
+        default:
+            printf("unknown\n");
+            break;
     }
 }
 
-int main( void )
+VOID ResizeEventProc(WINDOW_BUFFER_SIZE_RECORD wbsr)
 {
-   	int ch;
-	std::string strcmd="";
-   	do
-   	{
-      		ch = _getch();
-		if(ch == 13)
-		{
-			std::cout <<std::endl<< strcmd << std::endl;
-			strcmd = "";
-			std::vector<WIN32_FIND_DATA> v;
-			GetDirectTree(".\\", v);
-			for(auto& i : v)
-			{
-				std::cout<< i.cFileName <<std::endl;
-			}
-		}
-		else if(ch == 8)
-		{
-			if(strcmd.size() > 0)
-			{
-				std::cout<<"\b \b";
-				strcmd.pop_back();
-			}
-		}
-		else if(ch == 9)
-		{
-			/*while(strcmd.size() > 0 && (strcmd.back() != ' '))
-			{
-				std::cout<<"\b \b";
-				strcmd.pop_back();
-			}*/
-			COORD savePos = GetConsoleCursorPosition(hConsole);
-			std::vector<WIN32_FIND_DATA> v;
-			GetDirectTree(".\\", v);
-			gotoXY(savePos.X, savePos.Y+1);
-			for(int i=0; i < v.size(); i++)
-			{
-				std::string _temp = currTagetMenu == i ? "-->" : "   ";
-				std::cout<< _temp <<v[i].cFileName <<std::endl;
-			}
-			gotoXY(savePos.X, savePos.Y+1);
-		}
-		else if(ch == 224)
-		{
-			char c2 = _getch();
-			COORD savePos = GetConsoleCursorPosition(hConsole);
-			//savePos.X -= 3;
-
-			//gotoXY(savePos.X, savePos.Y);
-			std::cout << "   ";
-
-			if (c2 == 75) savePos.Y++;
-			else savePos.Y--;
-
-			gotoXY(0, savePos.Y);
-			std::cout << "-->";
-			gotoXY(0, savePos.Y);
-
-		}
-		else
-		{
-			strcmd += ch;
-			std::cout<< ch;
-		}
-   	} while(1);
- 	
+    printf("Resize event\n");
+    printf("Console screen buffer is %d columns by %d rows.\n", wbsr.dwSize.X, wbsr.dwSize.Y);
 }
