@@ -95,6 +95,11 @@ void Kmd::Init()
 	m_endLinePos 		= {0,0};
 	m_currCursorPos     = {0,0};
 
+	m_menuPopup = new MenuPopup(hConsoleOut);
+	m_menuPopup->SetCBEventEnter([](std::string item){
+		Kmd::GetInstance()->CBMenuEventEnter(item);
+	});
+
 	//get and save current attributes color of console
 	CONSOLE_SCREEN_BUFFER_INFO  info;
 	if (!GetConsoleScreenBufferInfo(hConsoleOut, &info))

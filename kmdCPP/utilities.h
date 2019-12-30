@@ -51,4 +51,6 @@ namespace Utilities
     std::string exec(const char* cmd);
 
     COORD GetConsoleCursorPosition(HANDLE hConsoleOutput);
+
+	void ShowConsoleCursor(bool showFlag, HANDLE hConsole);
 }

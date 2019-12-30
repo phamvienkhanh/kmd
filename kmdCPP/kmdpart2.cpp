@@ -134,7 +134,12 @@ void Kmd::KeyEventProc(KEY_EVENT_RECORD ker)
     	printf("AsciiChar           : %c\n" , ker.uChar.AsciiChar);
     	printf("UnicodeChar         : %c\n" , ker.uChar.UnicodeChar);
     	printf("dwControlKeyState   : %d\n" , ker.dwControlKeyState);*/
-    
+    	
+    	if(m_menuPopup != nullptr && m_menuPopup->IsVisiable())
+		{
+			m_menuPopup->HandleEventArrowKey(ker);
+			return;
+		}
 
 	    if(ker.wVirtualKeyCode == VK_TAB) //tab key
 		{
@@ -184,6 +189,13 @@ void Kmd::KeyEventProc(KEY_EVENT_RECORD ker)
 			{
 				HandleArrowKey(ker.wVirtualKeyCode);
 				UpdateCursorPos(false);
+			}
+			else if (ker.wVirtualKeyCode == VK_MENU)
+			{
+				COORD currPos = Utilities::GetConsoleCursorPosition(hConsoleOut);
+				m_menuPopup->SetListItems({"item1", "item2", "item3", "item4", "item5"});
+				m_menuPopup->SetPosition({currPos.X, currPos.Y + 1});
+				m_menuPopup->Show();
 			}
 			else
 			{
@@ -268,4 +280,10 @@ void Kmd::ErrorExit (LPSTR lpszMessage)
     SetConsoleMode(hStdin, fdwSaveOldMode);
 
     ExitProcess(0); */
+}
+
+
+void Kmd::CBMenuEventEnter(std::string item)
+{
+	std::wcout << item.c_str();	
 }

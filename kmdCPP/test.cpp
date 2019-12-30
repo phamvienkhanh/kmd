@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿#include "menupopup.h"
 
 HANDLE hStdin; 
 DWORD fdwSaveOldMode;
@@ -92,20 +92,28 @@ VOID ErrorExit (LPSTR lpszMessage)
     ExitProcess(0); 
 }
 
+std::vector<std::string> v{"aaaaaa","bbbbbb", "ccccc", "ddddddddd", "eeeeee", "fffff"};
+MenuPopup menuA(GetStdHandle(STD_OUTPUT_HANDLE));
+
 VOID KeyEventProc(KEY_EVENT_RECORD ker)
 {
-    printf("========================================= \n");
-
     if(ker.bKeyDown)
     {
-        printf("bKeyDown            : %d\n" , ker.bKeyDown);
-    	printf("wRepeatCount        : %d\n" , ker.wRepeatCount);
-    	printf("wVirtualKeyCode     : %d\n" , ker.wVirtualKeyCode);
-    	printf("wVirtualScanCode    : %d\n" , ker.wVirtualScanCode);
-    	printf("AsciiChar           : %c\n" , ker.uChar.AsciiChar);
-    	printf("UnicodeChar         : %c\n" , ker.uChar.UnicodeChar);
-    	printf("dwControlKeyState   : %d\n" , ker.dwControlKeyState);
-
+    	if(ker.wVirtualKeyCode == VK_TAB)
+    	{
+    		
+    		menuA.SetListItems(v);
+    		menuA.SetPosition({50,22});
+    		menuA.Show();
+    	}
+    	else if(ker.wVirtualKeyCode == VK_ESCAPE)
+    	{
+    		menuA.Close();
+    	}
+    	else
+    	{
+    		menuA.HandleEventArrowKey(ker);
+    	}
     }
    // else printf("key released\n");
 }

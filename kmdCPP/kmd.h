@@ -1,4 +1,5 @@
 #include "utilities.h"
+#include "menupopup.h"
 //singleton class
 
 #ifndef __KMD_HEADER_H__
@@ -12,6 +13,8 @@ public:
 	void Run();
 
 	std::string GetCurrentWorkingDir();
+
+	void CBMenuEventEnter(std::string item);
 
 private:
 	HANDLE			hConsoleOut;
@@ -33,7 +36,9 @@ private:
 	std::string 	m_currentCommand;
 
 	std::vector<WIN32_FIND_DATA>  m_listFileRecommend;
-	std::vector<std::string> 	  m_listHistoryCmd;	
+	std::vector<std::string> 	  m_listHistoryCmd;
+
+	MenuPopup*      m_menuPopup;	
 
 private:
 	Kmd();
@@ -59,6 +64,8 @@ private:
 	void KeyEventProc(KEY_EVENT_RECORD ker);
 	void MouseEventProc(MOUSE_EVENT_RECORD mer);
 	void ResizeEventProc(WINDOW_BUFFER_SIZE_RECORD wbsr);
+
+
 
 };
 

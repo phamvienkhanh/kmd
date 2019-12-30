@@ -1,1 +1,1 @@
-g++ test.cpp stdafx.cpp -static-libstdc++ -o test.exe
+g++ test.cpp stdafx.cpp utilities.cpp menupopup.cpp -static-libstdc++ -o test.exe

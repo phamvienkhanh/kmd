@@ -110,4 +110,13 @@ namespace Utilities
             return invalid;
         }
     }
+
+    void ShowConsoleCursor(bool showFlag, HANDLE hConsole)
+    {
+        CONSOLE_CURSOR_INFO     cursorInfo;
+
+        GetConsoleCursorInfo(hConsole, &cursorInfo);
+        cursorInfo.bVisible = showFlag;
+        SetConsoleCursorInfo(hConsole, &cursorInfo);
+    }
 }
