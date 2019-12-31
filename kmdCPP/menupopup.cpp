@@ -1,7 +1,8 @@
 #include "menupopup.h"
 #include "utilities.h"
 
-
+#define OFFSET_BORDER_LEFT 1
+#define OFFSET_BORDER_TOP 1
 
 void MenuPopup::SetListItems(std::vector<std::string> listItems)
 {
@@ -21,29 +22,36 @@ void MenuPopup::Show()
 	m_saveCurrPos = Utilities::GetConsoleCursorPosition(m_hConsole);
 	Utilities::ShowConsoleCursor(false, m_hConsole);
 
+	SetConsoleCursorPosition(m_hConsole,m_position);
+	std::wcout << L"\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557";
+
 	for(short i=0; i < m_listItems.size(); i++)
 	{
-		COORD newLine = {m_position.X, m_position.Y + i};
+		COORD newLine = {m_position.X , m_position.Y + i + OFFSET_BORDER_TOP};
 		SetConsoleCursorPosition(m_hConsole,newLine);
 
 		if(i == m_targetItem)
 		{
-			std::wcout << "--> " << m_listItems[i].c_str() << std::endl;
+			std::wcout << L"\u2551" << "--> " << m_listItems[i].c_str() << L"      \u2551";
 		}
 		else
 		{
-			std::wcout << "    " << m_listItems[i].c_str() << std::endl;
+			std::wcout << L"\u2551" << "    " << m_listItems[i].c_str() << L"      \u2551";
 		}
 
-		SetConsoleCursorPosition(m_hConsole,m_position);
 	}
+
+	COORD borderEndLine = {m_position.X, m_position.Y + m_listItems.size() + OFFSET_BORDER_TOP};
+	SetConsoleCursorPosition(m_hConsole,borderEndLine);
+	std::wcout << L"\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d";
+	SetConsoleCursorPosition(m_hConsole,m_saveCurrPos);
 
 }
 
 void MenuPopup::Close()
 {
-	std::string whiteSpace(100, ' ');
-	for(int i = 0; i < m_listItems.size(); i++)
+	std::string whiteSpace(20, ' ');
+	for(int i = 0; i <= m_listItems.size() + OFFSET_BORDER_TOP; i++)
 	{
 		COORD newtargetLine = {m_position.X, m_position.Y + i};
 		SetConsoleCursorPosition(m_hConsole,newtargetLine);
@@ -61,7 +69,7 @@ void MenuPopup::HandleEventArrowKey(KEY_EVENT_RECORD keyEvent)
 {
 	if(m_isVisible)
 	{
-		COORD currtargetLine = {m_position.X, m_position.Y + m_targetItem};
+		COORD currtargetLine = {m_position.X + OFFSET_BORDER_LEFT, m_position.Y + m_targetItem + OFFSET_BORDER_TOP};
 		SetConsoleCursorPosition(m_hConsole,currtargetLine);
 		std::wcout << "    ";
 
@@ -87,8 +95,13 @@ void MenuPopup::HandleEventArrowKey(KEY_EVENT_RECORD keyEvent)
 			}
 			return;
 		}
+		else if (keyEvent.wVirtualKeyCode == VK_ESCAPE)
+		{
+			Close();
+			return;
+		}
 
-		COORD newtargetLine = {m_position.X, m_position.Y + m_targetItem};
+		COORD newtargetLine = {m_position.X + OFFSET_BORDER_LEFT, m_position.Y + m_targetItem + OFFSET_BORDER_TOP};
 		SetConsoleCursorPosition(m_hConsole,newtargetLine);
 
 		std::wcout << "--> ";
